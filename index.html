@@ -3,407 +3,513 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tap Rush Arena 3D</title>
+<title>TAP RUSH ARENA</title>
 <style>
-  body {
-    margin: 0;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background: #101522;
-  }
-  #ui {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    display: flex;
-    justify-content: space-between;
-    color: white;
-    font-weight: bold;
-    font-size: 17px;
-    pointer-events: none;
-    z-index: 2;
-  }
-  #help {
-    position: fixed;
-    bottom: 18px;
-    left: 12px;
-    right: 12px;
-    text-align: center;
-    color: white;
-    background: #111a;
-    padding: 10px;
-    border-radius: 12px;
-    font-size: 14px;
-    pointer-events: none;
-  }
+* {
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+body {
+  margin: 0;
+  background: #10141e;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+#game {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: #202b35;
+}
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px;
+  font-weight: bold;
+  text-shadow: 0 2px 5px #000;
+}
+.panel {
+  background: #111b;
+  border: 1px solid #ffffff30;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+#healthBox {
+  position: absolute;
+  left: 18px;
+  top: 72px;
+  width: 180px;
+}
+.bar {
+  width: 100%;
+  height: 12px;
+  background: #351c25;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+#health {
+  height: 100%;
+  width: 100%;
+  background: #36ed80;
+  transition: width .15s;
+}
+#controls {
+  position: fixed;
+  bottom: 22px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+button {
+  border: 2px solid #ffffff40;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  border-radius: 18px;
+  background: #263b54;
+  box-shadow: 0 5px 0 #101a28;
+  padding: 17px;
+  min-width: 70px;
+}
+button:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+#attack {
+  background: #ed493e;
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  border: 4px solid #ffb0a6;
+}
+#move {
+  display: grid;
+  grid-template-columns: repeat(3, 48px);
+  gap: 5px;
+}
+#move button {
+  min-width: 0;
+  width: 48px;
+  height: 45px;
+  padding: 0;
+}
+#move .empty {
+  visibility: hidden;
+}
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #080c16df;
+  z-index: 5;
+}
+.card {
+  width: min(90%, 420px);
+  text-align: center;
+  padding: 30px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #243d61, #121b2b);
+  border: 2px solid #70c8ff80;
+  box-shadow: 0 0 45px #188aff30;
+}
+h1 {
+  font-size: 34px;
+  margin: 0 0 12px;
+  color: #7de0ff;
+  text-shadow: 0 0 20px #168dff;
+}
+#start {
+  width: 100%;
+  margin-top: 15px;
+  background: #168cff;
+  font-size: 20px;
+}
+#hint {
+  color: #b8c9dc;
+  line-height: 1.6;
+}
+@media (min-width: 800px) {
   #controls {
-    position: fixed;
-    bottom: 85px;
-    left: 18px;
-    right: 18px;
-    display: flex;
-    justify-content: space-between;
-    z-index: 3;
+    padding: 0 55px;
   }
-  button {
-    border: 2px solid white;
-    border-radius: 16px;
-    padding: 15px 20px;
-    font-size: 18px;
-    font-weight: bold;
-    color: white;
-    background: #2675d9;
-    touch-action: manipulation;
-  }
-  #shoot { background: #e44747; }
-  #restart {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
-    display: none;
-    z-index: 5;
-  }
+}
 </style>
 </head>
 <body>
-<div id="ui">
-  <span>❤️ חיים: <b id="hp">100</b></span>
-  <span>⭐ ניקוד: <b id="score">0</b></span>
-  <span>🪙 <b id="coins">0</b></span>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="top">
+    <div class="panel">TAP RUSH ARENA</div>
+    <div class="panel">ניקוד: <span id="score">0</span></div>
+  </div>
+  <div id="healthBox" class="panel">
+    <div>בריאות השחקן</div>
+    <div class="bar"><div id="health"></div></div>
+    <div style="margin-top:6px">ניצחונות: <span id="wins">0</span></div>
+  </div>
+  <div id="controls">
+    <div id="move">
+      <button class="empty"></button>
+      <button data-move="up">▲</button>
+      <button class="empty"></button>
+      <button data-move="left">◀</button>
+      <button data-move="down">▼</button>
+      <button data-move="right">▶</button>
+    </div>
+    <button id="attack">ATTACK</button>
+  </div>
 </div>
-<div id="controls">
-  <button id="move">⬅️ תנועה</button>
-  <button id="shoot">🔫 ירי</button>
+<div id="overlay">
+  <div class="card">
+    <h1>TAP RUSH</h1>
+    <h2>ARENA</h2>
+    <p id="hint">
+      היכנס לזירה, התחמק מהיריבים והשתלט על הקרב.
+      <br><br>
+      זוז באמצעות החצים ותקוף באמצעות כפתור ATTACK.
+    </p>
+    <button id="start">התחל משחק</button>
+  </div>
 </div>
-<div id="help">גרור את האצבע על המסך כדי להזיז את הגיבור. לחץ על ירי כדי לתקוף!</div>
-<button id="restart">🔄 שחק שוב</button>
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9bd8ff);
-scene.fog = new THREE.Fog(0x9bd8ff, 25, 65);
-const camera = new THREE.PerspectiveCamera(
-  60, innerWidth / innerHeight, 0.1, 100
-);
-camera.position.set(0, 11, 15);
-camera.lookAt(0, 0, 0);
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-document.body.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xffffff, 0x536078, 2));
-const sun = new THREE.DirectionalLight(0xffffff, 3);
-sun.position.set(5, 12, 7);
-sun.castShadow = true;
-scene.add(sun);
-// רצפת הזירה
-const floor = new THREE.Mesh(
-  new THREE.BoxGeometry(26, 0.5, 26),
-  new THREE.MeshStandardMaterial({color:0x48a95b, roughness:0.9})
-);
-floor.position.y = -0.3;
-floor.receiveShadow = true;
-scene.add(floor);
-// סימוני רצפה
-const grid = new THREE.GridHelper(26, 26, 0x226b39, 0x388b49);
-grid.position.y = -0.04;
-scene.add(grid);
-// קירות הזירה
-function wall(x,z,w,d) {
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(w, 1.4, d),
-    new THREE.MeshStandardMaterial({color:0x63768b})
-  );
-  m.position.set(x, 0.45, z);
-  m.castShadow = true;
-  m.receiveShadow = true;
-  scene.add(m);
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth * devicePixelRatio;
+  H = canvas.height = window.innerHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  W = window.innerWidth;
+  H = window.innerHeight;
 }
-wall(0,-13,27,0.7);
-wall(0,13,27,0.7);
-wall(-13,0,0.7,27);
-wall(13,0,0.7,27);
-// יצירת דמות תלת־ממדית
-function makeCharacter(color) {
-  const group = new THREE.Group();
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.55,0.68,1.05,12),
-    new THREE.MeshStandardMaterial({color, roughness:0.45})
-  );
-  body.position.y = 0.8;
-  body.castShadow = true;
-  group.add(body);
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.48,16,12),
-    new THREE.MeshStandardMaterial({color:0xffd1a0})
-  );
-  head.position.y = 1.65;
-  head.castShadow = true;
-  group.add(head);
-  const eyeMaterial = new THREE.MeshStandardMaterial({color:0x17202d});
-  for (const x of [-0.16,0.16]) {
-    const eye = new THREE.Mesh(
-      new THREE.SphereGeometry(0.055,8,8), eyeMaterial
-    );
-    eye.position.set(x,1.7,0.43);
-    group.add(eye);
-  }
-  const gun = new THREE.Mesh(
-    new THREE.BoxGeometry(0.22,0.22,0.85),
-    new THREE.MeshStandardMaterial({color:0x26313d, metalness:0.5})
-  );
-  gun.position.set(0.55,1.05,0.55);
-  gun.rotation.x = -0.12;
-  group.add(gun);
-  return group;
-}
-const player = makeCharacter(0x2675ff);
-player.position.set(0,0,5);
-scene.add(player);
-let hp = 100;
+window.addEventListener("resize", resize);
+resize();
+const player = {
+  x: 0, y: 0, r: 19,
+  hp: 100, speed: 3.2,
+  cooldown: 0, invulnerable: 0
+};
+let enemies = [];
+let bullets = [];
+let particles = [];
 let score = 0;
-let coins = 0;
-let gameOver = false;
-let lastShot = 0;
-let lastSpawn = 0;
-let invulnerable = 0;
-const enemies = [];
-const bullets = [];
-const coinObjects = [];
-const hpEl = document.getElementById('hp');
-const scoreEl = document.getElementById('score');
-const coinsEl = document.getElementById('coins');
-const restartBtn = document.getElementById('restart');
+let wins = 0;
+let running = false;
+let lastTime = 0;
+let spawnTimer = 0;
+let keys = {};
+let attackHeld = false;
+let arenaTime = 0;
+const scoreEl = document.getElementById("score");
+const healthEl = document.getElementById("health");
+const winsEl = document.getElementById("wins");
+const overlay = document.getElementById("overlay");
+function resetGame() {
+  player.x = W / 2;
+  player.y = H / 2;
+  player.hp = 100;
+  player.cooldown = 0;
+  player.invulnerable = 0;
+  enemies = [];
+  bullets = [];
+  particles = [];
+  score = 0;
+  spawnTimer = 0;
+  arenaTime = 0;
+  for (let i = 0; i < 4; i++) spawnEnemy();
+  scoreEl.textContent = score;
+  healthEl.style.width = "100%";
+  overlay.style.display = "none";
+  running = true;
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+document.getElementById("start").addEventListener("click", resetGame);
 function spawnEnemy() {
-  const enemy = makeCharacter(0xe94242);
-  const side = Math.floor(Math.random()*4);
-  if (side===0) enemy.position.set(-10,0,-10+Math.random()*20);
-  if (side===1) enemy.position.set(10,0,-10+Math.random()*20);
-  if (side===2) enemy.position.set(-10+Math.random()*20,0,-10);
-  if (side===3) enemy.position.set(-10+Math.random()*20,0,10);
-  enemy.userData.hp = 2;
-  enemy.userData.speed = 1.1 + Math.random()*0.65;
-  enemy.userData.hitTime = 0;
-  scene.add(enemy);
-  enemies.push(enemy);
+  const side = Math.floor(Math.random() * 4);
+  let x, y;
+  if (side === 0) { x = Math.random() * W; y = 70; }
+  if (side === 1) { x = W - 30; y = Math.random() * H; }
+  if (side === 2) { x = Math.random() * W; y = H - 80; }
+  if (side === 3) { x = 30; y = Math.random() * H; }
+  enemies.push({
+    x, y, r: 17,
+    hp: 2,
+    speed: 0.75 + Math.random() * 0.45,
+    attackTimer: 0,
+    color: ["#ff514f", "#ff9f43", "#d65cff"][Math.floor(Math.random() * 3)]
+  });
 }
-function spawnCoin(position) {
-  const coin = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.28,0.28,0.12,16),
-    new THREE.MeshStandardMaterial({
-      color:0xffd22f, metalness:0.65, roughness:0.25
-    })
-  );
-  coin.rotation.x = Math.PI/2;
-  coin.position.copy(position);
-  coin.position.y = 0.45;
-  coin.castShadow = true;
-  scene.add(coin);
-  coinObjects.push(coin);
+function particleBurst(x, y, color, amount = 10) {
+  for (let i = 0; i < amount; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 4 + 1;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * speed,
+      vy: Math.sin(a) * speed,
+      life: 25 + Math.random() * 20,
+      color
+    });
+  }
 }
-function shoot() {
-  if (gameOver || performance.now()-lastShot<260) return;
-  lastShot = performance.now();
+function attack() {
+  if (!running || player.cooldown > 0) return;
+  player.cooldown = 17;
   let target = null;
-  let best = Infinity;
-  for (const enemy of enemies) {
-    const distance = player.position.distanceTo(enemy.position);
-    if (distance<best) {
-      best=distance;
-      target=enemy;
+  let best = 180;
+  for (const e of enemies) {
+    const d = Math.hypot(e.x - player.x, e.y - player.y);
+    if (d < best) {
+      best = d;
+      target = e;
     }
   }
-  if (!target || best>13) return;
-  const bullet = new THREE.Mesh(
-    new THREE.SphereGeometry(0.17,10,10),
-    new THREE.MeshStandardMaterial({
-      color:0xffe14a, emissive:0x664400
-    })
-  );
-  bullet.position.set(
-    player.position.x, 1.15, player.position.z
-  );
-  const direction = new THREE.Vector3(
-    target.position.x-player.position.x,
-    0.15,
-    target.position.z-player.position.z
-  ).normalize();
-  bullet.userData.velocity = direction.multiplyScalar(0.55);
-  bullet.userData.life = 35;
-  scene.add(bullet);
-  bullets.push(bullet);
-  player.rotation.y = Math.atan2(
-    target.position.x-player.position.x,
-    target.position.z-player.position.z
-  );
-}
-document.getElementById('shoot').addEventListener('pointerdown',shoot);
-// תנועה עם מקלדת
-const keys = {};
-addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
-addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-let moveDirection = 0;
-document.getElementById('move').addEventListener('pointerdown',()=>{
-  moveDirection=-1;
-});
-document.getElementById('move').addEventListener('pointerup',()=>{
-  moveDirection=0;
-});
-document.getElementById('move').addEventListener('pointerleave',()=>{
-  moveDirection=0;
-});
-// שליטה במגע: גרירת האצבע מזיזה את השחקן
-let touchStart = null;
-renderer.domElement.addEventListener('pointerdown',e=>{
-  if (e.clientY > innerHeight-155) return;
-  touchStart={x:e.clientX,y:e.clientY};
-});
-renderer.domElement.addEventListener('pointermove',e=>{
-  if (!touchStart || gameOver) return;
-  const dx=e.clientX-touchStart.x;
-  const dy=e.clientY-touchStart.y;
-  player.position.x += dx*0.025;
-  player.position.z += dy*0.025;
-  player.position.x=THREE.MathUtils.clamp(player.position.x,-11.5,11.5);
-  player.position.z=THREE.MathUtils.clamp(player.position.z,-11.5,11.5);
-  touchStart={x:e.clientX,y:e.clientY};
-});
-renderer.domElement.addEventListener('pointerup',()=>touchStart=null);
-renderer.domElement.addEventListener('pointercancel',()=>touchStart=null);
-function endGame() {
-  gameOver=true;
-  restartBtn.style.display='block';
-}
-restartBtn.addEventListener('click',()=>{
-  for (const object of [...enemies,...bullets,...coinObjects]) {
-    scene.remove(object);
+  if (target) {
+    const dx = target.x - player.x;
+    const dy = target.y - player.y;
+    const len = Math.hypot(dx, dy) || 1;
+    bullets.push({
+      x: player.x,
+      y: player.y,
+      vx: dx / len * 8,
+      vy: dy / len * 8,
+      life: 35,
+      damage: 1
+    });
+  } else {
+    particleBurst(player.x, player.y, "#66ddff", 5);
   }
-  enemies.length=0;
-  bullets.length=0;
-  coinObjects.length=0;
-  hp=100;
-  score=0;
-  coins=0;
-  gameOver=false;
-  player.position.set(0,0,5);
-  restartBtn.style.display='none';
-  updateUI();
-});
-function updateUI() {
-  hpEl.textContent=hp;
-  scoreEl.textContent=score;
-  coinsEl.textContent=coins;
 }
-const clock = new THREE.Clock();
-function animate() {
-  requestAnimationFrame(animate);
-  const dt=Math.min(clock.getDelta(),0.04);
-  const now=performance.now();
-  if (!gameOver) {
-    // תנועת מקלדת
-    let dx=0,dz=0;
-    if(keys['arrowleft']||keys['a']) dx-=1;
-    if(keys['arrowright']||keys['d']) dx+=1;
-    if(keys['arrowup']||keys['w']) dz-=1;
-    if(keys['arrowdown']||keys['s']) dz+=1;
-    if(dx||dz) {
-      const length=Math.hypot(dx,dz);
-      player.position.x+=dx/length*5*dt;
-      player.position.z+=dz/length*5*dt;
+document.getElementById("attack").addEventListener("pointerdown", e => {
+  e.preventDefault();
+  attackHeld = true;
+  attack();
+});
+document.getElementById("attack").addEventListener("pointerup", () => {
+  attackHeld = false;
+});
+document.querySelectorAll("[data-move]").forEach(button => {
+  const key = button.dataset.move;
+  button.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    keys[key] = true;
+    button.setPointerCapture(e.pointerId);
+  });
+  const stop = () => keys[key] = false;
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointercancel", stop);
+  button.addEventListener("lostpointercapture", stop);
+});
+window.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if (["arrowup", "w"].includes(k)) keys.up = true;
+  if (["arrowdown", "s"].includes(k)) keys.down = true;
+  if (["arrowleft", "a"].includes(k)) keys.left = true;
+  if (["arrowright", "d"].includes(k)) keys.right = true;
+  if (k === " ") attack();
+});
+window.addEventListener("keyup", e => {
+  const k = e.key.toLowerCase();
+  if (["arrowup", "w"].includes(k)) keys.up = false;
+  if (["arrowdown", "s"].includes(k)) keys.down = false;
+  if (["arrowleft", "a"].includes(k)) keys.left = false;
+  if (["arrowright", "d"].includes(k)) keys.right = false;
+});
+function drawArena() {
+  ctx.fillStyle = "#263e35";
+  ctx.fillRect(0, 0, W, H);
+  const tile = 48;
+  for (let y = 0; y < H; y += tile) {
+    for (let x = 0; x < W; x += tile) {
+      ctx.fillStyle = ((x / tile + y / tile) % 2 === 0)
+        ? "#2b493d" : "#304e41";
+      ctx.fillRect(x, y, tile - 1, tile - 1);
     }
-    player.position.x=THREE.MathUtils.clamp(player.position.x,-11.5,11.5);
-    player.position.z=THREE.MathUtils.clamp(player.position.z,-11.5,11.5);
-    if(now-lastSpawn>1700 && enemies.length<12) {
-      spawnEnemy();
-      lastSpawn=now;
+  }
+  ctx.strokeStyle = "#91c9a533";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(12, 12, W - 24, H - 24);
+  const obstacles = [
+    [W * 0.22, H * 0.32, 70, 55],
+    [W * 0.68, H * 0.28, 65, 65],
+    [W * 0.27, H * 0.66, 60, 70],
+    [W * 0.72, H * 0.67, 75, 55]
+  ];
+  for (const [x, y, w, h] of obstacles) {
+    ctx.fillStyle = "#182b27";
+    ctx.fillRect(x + 5, y + 7, w, h);
+    ctx.fillStyle = "#697b55";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#84986b";
+    ctx.fillRect(x + 5, y + 5, w - 10, 9);
+    ctx.strokeStyle = "#182b27";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+  }
+}
+function drawCharacter(x, y, r, color, isPlayer = false) {
+  ctx.save();
+  ctx.fillStyle = "#0005";
+  ctx.beginPath();
+  ctx.ellipse(x + 3, y + 7, r * 1.1, r * 0.75, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = isPlayer ? "#b7f1ff" : "#ffd3d3";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(x - 6, y - 3, 4, 0, Math.PI * 2);
+  ctx.arc(x + 6, y - 3, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#18212c";
+  ctx.beginPath();
+  ctx.arc(x - 5, y - 3, 2, 0, Math.PI * 2);
+  ctx.arc(x + 7, y - 3, 2, 0, Math.PI * 2);
+  ctx.fill();
+  if (isPlayer) {
+    ctx.fillStyle = "#c8f7ff";
+    ctx.fillRect(x - 12, y + 11, 24, 5);
+  }
+  ctx.restore();
+}
+function loop(now) {
+  if (!running) return;
+  const dt = Math.min((now - lastTime) / 16.67, 2);
+  lastTime = now;
+  arenaTime += dt;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+function update(dt) {
+  if (player.cooldown > 0) player.cooldown -= dt;
+  if (player.invulnerable > 0) player.invulnerable -= dt;
+  let dx = 0, dy = 0;
+  if (keys.left) dx--;
+  if (keys.right) dx++;
+  if (keys.up) dy--;
+  if (keys.down) dy++;
+  const len = Math.hypot(dx, dy) || 1;
+  player.x += dx / len * player.speed * dt;
+  player.y += dy / len * player.speed * dt;
+  player.x = Math.max(30, Math.min(W - 30, player.x));
+  player.y = Math.max(65, Math.min(H - 30, player.y));
+  if (attackHeld && player.cooldown <= 0) attack();
+  spawnTimer += dt;
+  if (spawnTimer > 100 && enemies.length < 10) {
+    spawnEnemy();
+    spawnTimer = 0;
+  }
+  for (const e of enemies) {
+    const ex = player.x - e.x;
+    const ey = player.y - e.y;
+    const d = Math.hypot(ex, ey) || 1;
+    e.x += ex / d * e.speed * dt;
+    e.y += ey / d * e.speed * dt;
+    e.attackTimer -= dt;
+    if (d < e.r + player.r && e.attackTimer <= 0) {
+      if (player.invulnerable <= 0) {
+        player.hp -= 10;
+        player.invulnerable = 28;
+        particleBurst(player.x, player.y, "#ff5353", 9);
+        healthEl.style.width = Math.max(0, player.hp) + "%";
+      }
+      e.attackTimer = 30;
     }
-    // האויבים רודפים אחרי השחקן
-    for(let i=enemies.length-1;i>=0;i--) {
-      const enemy=enemies[i];
-      const dir=new THREE.Vector3(
-        player.position.x-enemy.position.x,
-        0,
-        player.position.z-enemy.position.z
-      );
-      const distance=dir.length();
-      if(distance>1.15) {
-        dir.normalize();
-        enemy.position.addScaledVector(dir,enemy.userData.speed*dt);
-        enemy.rotation.y=Math.atan2(dir.x,dir.z);
-      } else if(now-enemy.userData.hitTime>650) {
-        if(now>invulnerable) {
-          hp=Math.max(0,hp-8);
-          invulnerable=now+500;
-          updateUI();
-          if(hp<=0) endGame();
+  }
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+    let remove = b.life <= 0 ||
+      b.x < 0 || b.x > W || b.y < 0 || b.y > H;
+    for (const e of enemies) {
+      if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) < e.r + 7) {
+        e.hp -= b.damage;
+        particleBurst(b.x, b.y, "#ffcf70", 6);
+        remove = true;
+        if (e.hp <= 0) {
+          score += 100;
+          scoreEl.textContent = score;
+          particleBurst(e.x, e.y, e.color, 18);
         }
-        enemy.userData.hitTime=now;
+        break;
       }
     }
-    // תנועת קליעים ופגיעה באויבים
-    for(let i=bullets.length-1;i>=0;i--) {
-      const bullet=bullets[i];
-      bullet.position.add(bullet.userData.velocity);
-      bullet.userData.life--;
-      let hit=false;
-      for(let j=enemies.length-1;j>=0;j--) {
-        const enemy=enemies[j];
-        if(bullet.position.distanceTo(
-          new THREE.Vector3(enemy.position.x,1.1,enemy.position.z)
-        )<0.85) {
-          enemy.userData.hp--;
-          hit=true;
-          if(enemy.userData.hp<=0) {
-            spawnCoin(enemy.position);
-            scene.remove(enemy);
-            enemies.splice(j,1);
-            score+=10;
-            updateUI();
-          }
-          break;
-        }
-      }
-      if(hit||bullet.userData.life<=0) {
-        scene.remove(bullet);
-        bullets.splice(i,1);
-      }
-    }
-    // איסוף מטבעות
-    for(let i=coinObjects.length-1;i>=0;i--) {
-      const coin=coinObjects[i];
-      coin.rotation.y+=dt*2;
-      if(coin.position.distanceTo(player.position)<1.15) {
-        scene.remove(coin);
-        coinObjects.splice(i,1);
-        coins++;
-        score+=5;
-        updateUI();
-      }
-    }
-    // מצלמה עוקבת
-    const desiredCamera=new THREE.Vector3(
-      player.position.x,
-      11,
-      player.position.z+12
-    );
-    camera.position.lerp(desiredCamera,0.07);
-    camera.lookAt(player.position.x,0,player.position.z);
+    if (remove) bullets.splice(i, 1);
   }
-  renderer.render(scene,camera);
+  enemies = enemies.filter(e => e.hp > 0);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.97;
+    p.vy *= 0.97;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  if (player.hp <= 0) {
+    running = false;
+    overlay.style.display = "flex";
+    document.querySelector("#overlay h1").textContent = "GAME OVER";
+    document.querySelector("#overlay h2").textContent = "הקרב הסתיים";
+    document.getElementById("hint").innerHTML =
+      "הניקוד שלך: " + score + "<br>ניצחונות: " + wins +
+      "<br><br>נסה שוב ושפר את התוצאה שלך.";
+    document.getElementById("start").textContent = "שחק שוב";
+  }
+  if (score >= (wins + 1) * 500) {
+    wins++;
+    winsEl.textContent = wins;
+    player.hp = Math.min(100, player.hp + 15);
+    healthEl.style.width = player.hp + "%";
+  }
 }
-addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-});
-spawnEnemy();
-spawnEnemy();
-animate();
+function draw() {
+  drawArena();
+  for (const b of bullets) {
+    ctx.fillStyle = "#ffe08a";
+    ctx.shadowColor = "#ffb52e";
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  for (const e of enemies) {
+    drawCharacter(e.x, e.y, e.r, e.color);
+    ctx.fillStyle = "#351c25";
+    ctx.fillRect(e.x - 18, e.y - 29, 36, 5);
+    ctx.fillStyle = "#ff6262";
+    ctx.fillRect(e.x - 18, e.y - 29, 36 * Math.max(0, e.hp / 2), 5);
+  }
+  if (player.invulnerable <= 0 || Math.floor(arenaTime / 4) % 2 === 0) {
+    drawCharacter(player.x, player.y, player.r, "#19a9ff", true);
+  }
+  for (const p of particles) {
+    ctx.globalAlpha = Math.min(1, p.life / 20);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+}
 </script>
 </body>
 </html>
