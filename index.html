@@ -1,257 +1,409 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Tap Rush Arena</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap Rush Arena 3D</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#101426;color:white;font-family:Arial,sans-serif;text-align:center;overflow:hidden;touch-action:none}
-#game{display:block;width:100vw;height:100dvh;background:#243d36}
-#hud{position:absolute;top:10px;left:0;right:0;display:flex;justify-content:space-around;align-items:center;pointer-events:none;font-weight:bold;text-shadow:0 2px 4px #000}
-.badge{background:#111c;padding:9px 13px;border:1px solid #ffffff44;border-radius:12px}
-#healthBox{width:100px;height:12px;background:#541d2c;border-radius:10px;overflow:hidden;margin-top:5px}
-#health{height:100%;width:100%;background:#49ed79;transition:width .15s}
-#controls{position:absolute;bottom:24px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 22px}
-#stick{width:115px;height:115px;border-radius:50%;background:#ffffff22;border:3px solid #ffffff55;position:relative;touch-action:none}
-#knob{position:absolute;left:30px;top:30px;width:49px;height:49px;border-radius:50%;background:#ffffff99;border:2px solid white}
-.action{width:76px;height:76px;border-radius:50%;border:4px solid #ffffff99;color:white;font-size:25px;font-weight:bold;box-shadow:0 5px #0005;touch-action:none}
-#shoot{background:#ec4b54}
-#super{background:#9a54f5;width:65px;height:65px;font-size:14px}
-#actions{display:flex;align-items:end;gap:12px}
-#overlay{position:absolute;inset:0;background:#0a1024dd;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px}
-#overlay h1{font-size:42px;color:#ffdf55;margin:0 0 10px;text-shadow:0 4px #a54a22}
-#overlay p{max-width:300px;line-height:1.6}
-#start{border:0;border-radius:14px;padding:15px 32px;background:#54e58b;color:#10251b;font-size:20px;font-weight:bold}
-.small{font-size:12px;color:#c9d1e8}
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #101522;
+  }
+  #ui {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    font-weight: bold;
+    font-size: 17px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  #help {
+    position: fixed;
+    bottom: 18px;
+    left: 12px;
+    right: 12px;
+    text-align: center;
+    color: white;
+    background: #111a;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    pointer-events: none;
+  }
+  #controls {
+    position: fixed;
+    bottom: 85px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 3;
+  }
+  button {
+    border: 2px solid white;
+    border-radius: 16px;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: #2675d9;
+    touch-action: manipulation;
+  }
+  #shoot { background: #e44747; }
+  #restart {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    display: none;
+    z-index: 5;
+  }
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-
-<div id="hud">
-  <div class="badge">🏆 <span id="score">0</span></div>
-  <div class="badge">❤️ <span id="hpText">100</span><div id="healthBox"><div id="health"></div></div></div>
-  <div class="badge">⚡ <span id="superText">מוכן</span></div>
+<div id="ui">
+  <span>❤️ חיים: <b id="hp">100</b></span>
+  <span>⭐ ניקוד: <b id="score">0</b></span>
+  <span>🪙 <b id="coins">0</b></span>
 </div>
-
 <div id="controls">
-  <div id="stick"><div id="knob"></div></div>
-  <div id="actions">
-    <button class="action" id="super">SUPER</button>
-    <button class="action" id="shoot">➤</button>
-  </div>
+  <button id="move">⬅️ תנועה</button>
+  <button id="shoot">🔫 ירי</button>
 </div>
-
-<div id="overlay">
-  <h1>TAP RUSH</h1>
-  <h2>⚔️ ARENA BRAWL ⚔️</h2>
-  <p>היכנס לזירה, התחמק מאויבים, ירה בהם וצבור נקודות. שרוד כמה שיותר!</p>
-  <button id="start">🔥 התחל קרב</button>
-  <p class="small">תנועה: הג'ויסטיק · ירי: הכפתור האדום · מתקפה מיוחדת: SUPER</p>
-</div>
-
-<script>
-const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d');
-const $=id=>document.getElementById(id);
-let W=0,H=0,active=false,score=0,last=0,spawn=0;
-let player,enemies=[],bullets=[],particles=[];
-let move={x:0,y:0},shooting=false,superReady=true;
-const rnd=(a,b)=>Math.random()*(b-a)+a;
-
-function resize(){
-  canvas.width=innerWidth*devicePixelRatio;
-  canvas.height=innerHeight*devicePixelRatio;
-  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  W=innerWidth;H=innerHeight;
+<div id="help">גרור את האצבע על המסך כדי להזיז את הגיבור. לחץ על ירי כדי לתקוף!</div>
+<button id="restart">🔄 שחק שוב</button>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9bd8ff);
+scene.fog = new THREE.Fog(0x9bd8ff, 25, 65);
+const camera = new THREE.PerspectiveCamera(
+  60, innerWidth / innerHeight, 0.1, 100
+);
+camera.position.set(0, 11, 15);
+camera.lookAt(0, 0, 0);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x536078, 2));
+const sun = new THREE.DirectionalLight(0xffffff, 3);
+sun.position.set(5, 12, 7);
+sun.castShadow = true;
+scene.add(sun);
+// רצפת הזירה
+const floor = new THREE.Mesh(
+  new THREE.BoxGeometry(26, 0.5, 26),
+  new THREE.MeshStandardMaterial({color:0x48a95b, roughness:0.9})
+);
+floor.position.y = -0.3;
+floor.receiveShadow = true;
+scene.add(floor);
+// סימוני רצפה
+const grid = new THREE.GridHelper(26, 26, 0x226b39, 0x388b49);
+grid.position.y = -0.04;
+scene.add(grid);
+// קירות הזירה
+function wall(x,z,w,d) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, 1.4, d),
+    new THREE.MeshStandardMaterial({color:0x63768b})
+  );
+  m.position.set(x, 0.45, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  scene.add(m);
 }
-addEventListener('resize',resize);resize();
-
-function reset(){
- player={x:W/2,y:H/2,r:17,hp:100,speed:205,inv:0};
- enemies=[];bullets=[];particles=[];score=0;spawn=0;
- superReady=true;active=true;last=performance.now();
- $('score').textContent=0;
- $('hpText').textContent=100;
- $('health').style.width='100%';
- $('superText').textContent='מוכן';
- $('overlay').style.display='none';
- requestAnimationFrame(loop);
-}
-
-function enemy(){
- let side=Math.floor(Math.random()*4),x,y;
- if(side===0){x=rnd(20,W-20);y=40}
- if(side===1){x=W-30;y=rnd(70,H-40)}
- if(side===2){x=rnd(20,W-20);y=H-130}
- if(side===3){x=30;y=rnd(70,H-40)}
- enemies.push({x,y,r:15,hp:2,speed:rnd(48,75)});
-}
-
-function shoot(){
- if(!active)return;
- let target=null,best=Infinity;
- for(const e of enemies){
-  const d=Math.hypot(e.x-player.x,e.y-player.y);
-  if(d<best){best=d;target=e}
- }
- let dx=target?target.x-player.x:move.x||1;
- let dy=target?target.y-player.y:move.y;
- let len=Math.hypot(dx,dy)||1;
- bullets.push({x:player.x,y:player.y,vx:dx/len*430,vy:dy/len*430,r:6,life:1.1});
-}
-
-function burst(x,y,color,n=10){
- for(let i=0;i<n;i++){
-  const a=rnd(0,Math.PI*2),s=rnd(40,180);
-  particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(.2,.55),color});
- }
-}
-
-function special(){
- if(!active||!superReady)return;
- superReady=false;$('superText').textContent='נטען';
- for(const e of enemies){
-  const d=Math.hypot(e.x-player.x,e.y-player.y);
-  if(d<155){e.hp-=3;burst(e.x,e.y,'#b77aff',14)}
- }
- burst(player.x,player.y,'#c18cff',35);
- setTimeout(()=>{superReady=true;$('superText').textContent='מוכן'},5000);
-}
-
-function circle(x,y,r,color,stroke){
- ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
- ctx.fillStyle=color;ctx.fill();
- if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke()}
-}
-
-function loop(now){
- if(!active)return;
- const dt=Math.min((now-last)/1000,.04);last=now;
- ctx.clearRect(0,0,W,H);
- ctx.fillStyle='#284b3d';ctx.fillRect(0,0,W,H);
-
- const tile=42;
- for(let x=0;x<W;x+=tile)for(let y=0;y<H;y+=tile){
-  if((Math.floor(x/tile)+Math.floor(y/tile))%2===0){
-   ctx.fillStyle='#ffffff08';ctx.fillRect(x,y,tile,tile);
+wall(0,-13,27,0.7);
+wall(0,13,27,0.7);
+wall(-13,0,0.7,27);
+wall(13,0,0.7,27);
+// יצירת דמות תלת־ממדית
+function makeCharacter(color) {
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.55,0.68,1.05,12),
+    new THREE.MeshStandardMaterial({color, roughness:0.45})
+  );
+  body.position.y = 0.8;
+  body.castShadow = true;
+  group.add(body);
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.48,16,12),
+    new THREE.MeshStandardMaterial({color:0xffd1a0})
+  );
+  head.position.y = 1.65;
+  head.castShadow = true;
+  group.add(head);
+  const eyeMaterial = new THREE.MeshStandardMaterial({color:0x17202d});
+  for (const x of [-0.16,0.16]) {
+    const eye = new THREE.Mesh(
+      new THREE.SphereGeometry(0.055,8,8), eyeMaterial
+    );
+    eye.position.set(x,1.7,0.43);
+    group.add(eye);
   }
- }
-
- for(let x=40;x<W;x+=120)for(let y=100;y<H-140;y+=145){
-  ctx.fillStyle='#182c2c';ctx.fillRect(x,y,36,30);
-  ctx.fillStyle='#477d48';ctx.fillRect(x+3,y+3,30,24);
- }
-
- player.x=Math.max(20,Math.min(W-20,player.x+move.x*player.speed*dt));
- player.y=Math.max(65,Math.min(H-145,player.y+move.y*player.speed*dt));
- player.inv=Math.max(0,player.inv-dt);
-
- if(shooting)spawn-=dt;
- if(shooting&&spawn<=0){shoot();spawn=.24}
-
- if(Math.random()<dt*(.55+score/45)&&enemies.length<9)enemy();
-
- for(const e of enemies){
-  const dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;
-  e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;
-  if(d<e.r+player.r&&player.inv<=0){
-   player.hp-=12;player.inv=.65;burst(player.x,player.y,'#ff6374',7);
-  }
-  circle(e.x,e.y,e.r,'#ee5260','#ffb2a9');
-  circle(e.x-4,e.y-3,3,'#fff');
-  ctx.fillStyle='#411d32';ctx.fillRect(e.x-15,e.y-24,30,4);
-  ctx.fillStyle='#ffcc4a';ctx.fillRect(e.x-15,e.y-24,30*Math.max(0,e.hp/2),4);
- }
-
- enemies=enemies.filter(e=>{
-  if(e.hp<=0){
-   score++;$('score').textContent=score;
-   burst(e.x,e.y,'#ffd45e',12);return false;
-  }
-  return true;
- });
-
- for(const b of bullets){
-  b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
-  circle(b.x,b.y,b.r,'#ffe17b');
-  for(const e of enemies){
-   if(Math.hypot(b.x-e.x,b.y-e.y)<b.r+e.r){
-    e.hp--;b.life=0;burst(b.x,b.y,'#ffe17b',4);break;
-   }
-  }
- }
-
- bullets=bullets.filter(b=>b.life>0&&b.x>-20&&b.x<W+20&&b.y>-20&&b.y<H+20);
-
- for(const p of particles){
-  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
-  circle(p.x,p.y,Math.max(1,p.life*6),p.color);
- }
- particles=particles.filter(p=>p.life>0);
-
- if(player.inv<=0||Math.floor(now/80)%2===0){
-  circle(player.x,player.y,player.r,'#4fdcff','#d8faff');
-  circle(player.x+4,player.y-4,5,'#fff');
-  circle(player.x+7,player.y-4,2,'#17233e');
- }
-
- $('hpText').textContent=Math.max(0,Math.ceil(player.hp));
- $('health').style.width=Math.max(0,player.hp)+'%';
-
- if(player.hp<=0){endGame();return}
- requestAnimationFrame(loop);
+  const gun = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22,0.22,0.85),
+    new THREE.MeshStandardMaterial({color:0x26313d, metalness:0.5})
+  );
+  gun.position.set(0.55,1.05,0.55);
+  gun.rotation.x = -0.12;
+  group.add(gun);
+  return group;
 }
-
-function endGame(){
- active=false;
- $('overlay').style.display='flex';
- $('overlay').innerHTML=`<h1>הקרב נגמר!</h1><h2>🏆 ניקוד: ${score}</h2><p>נסה שוב ושבור את השיא שלך!</p><button id="start">🔁 קרב נוסף</button>`;
- $('start').addEventListener('click',reset);
+const player = makeCharacter(0x2675ff);
+player.position.set(0,0,5);
+scene.add(player);
+let hp = 100;
+let score = 0;
+let coins = 0;
+let gameOver = false;
+let lastShot = 0;
+let lastSpawn = 0;
+let invulnerable = 0;
+const enemies = [];
+const bullets = [];
+const coinObjects = [];
+const hpEl = document.getElementById('hp');
+const scoreEl = document.getElementById('score');
+const coinsEl = document.getElementById('coins');
+const restartBtn = document.getElementById('restart');
+function spawnEnemy() {
+  const enemy = makeCharacter(0xe94242);
+  const side = Math.floor(Math.random()*4);
+  if (side===0) enemy.position.set(-10,0,-10+Math.random()*20);
+  if (side===1) enemy.position.set(10,0,-10+Math.random()*20);
+  if (side===2) enemy.position.set(-10+Math.random()*20,0,-10);
+  if (side===3) enemy.position.set(-10+Math.random()*20,0,10);
+  enemy.userData.hp = 2;
+  enemy.userData.speed = 1.1 + Math.random()*0.65;
+  enemy.userData.hitTime = 0;
+  scene.add(enemy);
+  enemies.push(enemy);
 }
-
-$('start').addEventListener('click',reset);
-$('shoot').addEventListener('pointerdown',e=>{e.preventDefault();shooting=true;shoot()});
-['pointerup','pointercancel','pointerleave'].forEach(ev=>$('shoot').addEventListener(ev,()=>shooting=false));
-$('super').addEventListener('pointerdown',e=>{e.preventDefault();special()});
-
-const stick=$('stick'),knob=$('knob');let pointer=null;
-function joy(e){
- const r=stick.getBoundingClientRect();
- let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
- const max=37,len=Math.hypot(dx,dy)||1;
- if(len>max){dx=dx/len*max;dy=dy/len*max}
- move={x:dx/max,y:dy/max};
- knob.style.transform=`translate(${dx}px,${dy}px)`;
+function spawnCoin(position) {
+  const coin = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28,0.28,0.12,16),
+    new THREE.MeshStandardMaterial({
+      color:0xffd22f, metalness:0.65, roughness:0.25
+    })
+  );
+  coin.rotation.x = Math.PI/2;
+  coin.position.copy(position);
+  coin.position.y = 0.45;
+  coin.castShadow = true;
+  scene.add(coin);
+  coinObjects.push(coin);
 }
-stick.addEventListener('pointerdown',e=>{pointer=e.pointerId;stick.setPointerCapture(pointer);joy(e)});
-stick.addEventListener('pointermove',e=>{if(e.pointerId===pointer)joy(e)});
-function stopJoy(){pointer=null;move={x:0,y:0};knob.style.transform='translate(0,0)'}
-stick.addEventListener('pointerup',stopJoy);
-stick.addEventListener('pointercancel',stopJoy);
-
-const keys={};
-addEventListener('keydown',e=>{
- keys[e.key.toLowerCase()]=true;
- if(e.key===' ')shoot();
- if(e.key.toLowerCase()==='e')special();
-});
+function shoot() {
+  if (gameOver || performance.now()-lastShot<260) return;
+  lastShot = performance.now();
+  let target = null;
+  let best = Infinity;
+  for (const enemy of enemies) {
+    const distance = player.position.distanceTo(enemy.position);
+    if (distance<best) {
+      best=distance;
+      target=enemy;
+    }
+  }
+  if (!target || best>13) return;
+  const bullet = new THREE.Mesh(
+    new THREE.SphereGeometry(0.17,10,10),
+    new THREE.MeshStandardMaterial({
+      color:0xffe14a, emissive:0x664400
+    })
+  );
+  bullet.position.set(
+    player.position.x, 1.15, player.position.z
+  );
+  const direction = new THREE.Vector3(
+    target.position.x-player.position.x,
+    0.15,
+    target.position.z-player.position.z
+  ).normalize();
+  bullet.userData.velocity = direction.multiplyScalar(0.55);
+  bullet.userData.life = 35;
+  scene.add(bullet);
+  bullets.push(bullet);
+  player.rotation.y = Math.atan2(
+    target.position.x-player.position.x,
+    target.position.z-player.position.z
+  );
+}
+document.getElementById('shoot').addEventListener('pointerdown',shoot);
+// תנועה עם מקלדת
+const keys = {};
+addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-
-function keyboardLoop(){
- if(active){
-  let x=0,y=0;
-  if(keys.w||keys.arrowup)y--;
-  if(keys.s||keys.arrowdown)y++;
-  if(keys.a||keys.arrowleft)x--;
-  if(keys.d||keys.arrowright)x++;
-  if(x||y){const d=Math.hypot(x,y);move={x:x/d,y:y/d}}
-  else if(!pointer)move={x:0,y:0};
- }
- requestAnimationFrame(keyboardLoop);
+let moveDirection = 0;
+document.getElementById('move').addEventListener('pointerdown',()=>{
+  moveDirection=-1;
+});
+document.getElementById('move').addEventListener('pointerup',()=>{
+  moveDirection=0;
+});
+document.getElementById('move').addEventListener('pointerleave',()=>{
+  moveDirection=0;
+});
+// שליטה במגע: גרירת האצבע מזיזה את השחקן
+let touchStart = null;
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if (e.clientY > innerHeight-155) return;
+  touchStart={x:e.clientX,y:e.clientY};
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  if (!touchStart || gameOver) return;
+  const dx=e.clientX-touchStart.x;
+  const dy=e.clientY-touchStart.y;
+  player.position.x += dx*0.025;
+  player.position.z += dy*0.025;
+  player.position.x=THREE.MathUtils.clamp(player.position.x,-11.5,11.5);
+  player.position.z=THREE.MathUtils.clamp(player.position.z,-11.5,11.5);
+  touchStart={x:e.clientX,y:e.clientY};
+});
+renderer.domElement.addEventListener('pointerup',()=>touchStart=null);
+renderer.domElement.addEventListener('pointercancel',()=>touchStart=null);
+function endGame() {
+  gameOver=true;
+  restartBtn.style.display='block';
 }
-keyboardLoop();
+restartBtn.addEventListener('click',()=>{
+  for (const object of [...enemies,...bullets,...coinObjects]) {
+    scene.remove(object);
+  }
+  enemies.length=0;
+  bullets.length=0;
+  coinObjects.length=0;
+  hp=100;
+  score=0;
+  coins=0;
+  gameOver=false;
+  player.position.set(0,0,5);
+  restartBtn.style.display='none';
+  updateUI();
+});
+function updateUI() {
+  hpEl.textContent=hp;
+  scoreEl.textContent=score;
+  coinsEl.textContent=coins;
+}
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.04);
+  const now=performance.now();
+  if (!gameOver) {
+    // תנועת מקלדת
+    let dx=0,dz=0;
+    if(keys['arrowleft']||keys['a']) dx-=1;
+    if(keys['arrowright']||keys['d']) dx+=1;
+    if(keys['arrowup']||keys['w']) dz-=1;
+    if(keys['arrowdown']||keys['s']) dz+=1;
+    if(dx||dz) {
+      const length=Math.hypot(dx,dz);
+      player.position.x+=dx/length*5*dt;
+      player.position.z+=dz/length*5*dt;
+    }
+    player.position.x=THREE.MathUtils.clamp(player.position.x,-11.5,11.5);
+    player.position.z=THREE.MathUtils.clamp(player.position.z,-11.5,11.5);
+    if(now-lastSpawn>1700 && enemies.length<12) {
+      spawnEnemy();
+      lastSpawn=now;
+    }
+    // האויבים רודפים אחרי השחקן
+    for(let i=enemies.length-1;i>=0;i--) {
+      const enemy=enemies[i];
+      const dir=new THREE.Vector3(
+        player.position.x-enemy.position.x,
+        0,
+        player.position.z-enemy.position.z
+      );
+      const distance=dir.length();
+      if(distance>1.15) {
+        dir.normalize();
+        enemy.position.addScaledVector(dir,enemy.userData.speed*dt);
+        enemy.rotation.y=Math.atan2(dir.x,dir.z);
+      } else if(now-enemy.userData.hitTime>650) {
+        if(now>invulnerable) {
+          hp=Math.max(0,hp-8);
+          invulnerable=now+500;
+          updateUI();
+          if(hp<=0) endGame();
+        }
+        enemy.userData.hitTime=now;
+      }
+    }
+    // תנועת קליעים ופגיעה באויבים
+    for(let i=bullets.length-1;i>=0;i--) {
+      const bullet=bullets[i];
+      bullet.position.add(bullet.userData.velocity);
+      bullet.userData.life--;
+      let hit=false;
+      for(let j=enemies.length-1;j>=0;j--) {
+        const enemy=enemies[j];
+        if(bullet.position.distanceTo(
+          new THREE.Vector3(enemy.position.x,1.1,enemy.position.z)
+        )<0.85) {
+          enemy.userData.hp--;
+          hit=true;
+          if(enemy.userData.hp<=0) {
+            spawnCoin(enemy.position);
+            scene.remove(enemy);
+            enemies.splice(j,1);
+            score+=10;
+            updateUI();
+          }
+          break;
+        }
+      }
+      if(hit||bullet.userData.life<=0) {
+        scene.remove(bullet);
+        bullets.splice(i,1);
+      }
+    }
+    // איסוף מטבעות
+    for(let i=coinObjects.length-1;i>=0;i--) {
+      const coin=coinObjects[i];
+      coin.rotation.y+=dt*2;
+      if(coin.position.distanceTo(player.position)<1.15) {
+        scene.remove(coin);
+        coinObjects.splice(i,1);
+        coins++;
+        score+=5;
+        updateUI();
+      }
+    }
+    // מצלמה עוקבת
+    const desiredCamera=new THREE.Vector3(
+      player.position.x,
+      11,
+      player.position.z+12
+    );
+    camera.position.lerp(desiredCamera,0.07);
+    camera.lookAt(player.position.x,0,player.position.z);
+  }
+  renderer.render(scene,camera);
+}
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+spawnEnemy();
+spawnEnemy();
+animate();
 </script>
 </body>
 </html>
