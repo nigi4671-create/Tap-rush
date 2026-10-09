@@ -1,57 +1,32 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-#game {
-  width: 100vw;
-  height: 100dvh;
-  display: block;
-}
-@media screen and (orientation: portrait) {
-  body::after {
-    content: "סובב את הטלפון לרוחב כדי לשחק";
-    position: fixed;
-    inset: 0;
-    background: #10141e;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    z-index: 9999;
-  }
-}
-</style>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#10141e">
 <title>TAP RUSH ARENA</title>
 <style>
 * {
   box-sizing: border-box;
-  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
 }
-body {
+html, body {
   margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   background: #10141e;
   color: white;
   font-family: Arial, sans-serif;
-  overflow: hidden;
+  user-select: none;
 }
 #game {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
-  width: 100vw;
-  height: 100vh;
-  background: #202b35;
 }
 #hud {
   position: fixed;
@@ -59,28 +34,33 @@ body {
   pointer-events: none;
 }
 .top {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
   display: flex;
   justify-content: space-between;
-  padding: 18px;
-  font-weight: bold;
-  text-shadow: 0 2px 5px #000;
+  align-items: flex-start;
 }
 .panel {
-  background: #111b;
-  border: 1px solid #ffffff30;
-  border-radius: 12px;
-  padding: 10px 14px;
+  padding: 8px 13px;
+  border: 1px solid #ffffff35;
+  background: #101a2ddd;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: clamp(12px, 2.5vw, 17px);
+  box-shadow: 0 3px 12px #0004;
 }
 #healthBox {
   position: absolute;
-  left: 18px;
-  top: 72px;
-  width: 180px;
+  left: max(12px, env(safe-area-inset-left));
+  top: 58px;
+  width: 150px;
 }
 .bar {
   width: 100%;
-  height: 12px;
-  background: #351c25;
+  height: 9px;
+  background: #421e2b;
   border-radius: 10px;
   overflow: hidden;
   margin-top: 6px;
@@ -88,53 +68,48 @@ body {
 #health {
   height: 100%;
   width: 100%;
-  background: #36ed80;
+  background: #42f28b;
   transition: width .15s;
 }
 #controls {
-  position: fixed;
-  bottom: 22px;
-  left: 0;
-  right: 0;
+  position: absolute;
+  bottom: max(15px, env(safe-area-inset-bottom));
+  left: max(18px, env(safe-area-inset-left));
+  right: max(18px, env(safe-area-inset-right));
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 0 24px;
 }
 button {
-  border: 2px solid #ffffff40;
   color: white;
-  font-size: 17px;
+  border: 2px solid #ffffff50;
+  background: #263e5c;
   font-weight: bold;
-  border-radius: 18px;
-  background: #263b54;
-  box-shadow: 0 5px 0 #101a28;
-  padding: 17px;
-  min-width: 70px;
-}
-button:active {
-  transform: translateY(3px);
-  box-shadow: none;
-}
-#attack {
-  background: #ed493e;
-  width: 95px;
-  height: 95px;
-  border-radius: 50%;
-  border: 4px solid #ffb0a6;
+  box-shadow: 0 4px 0 #101a28;
+  user-select: none;
 }
 #move {
   display: grid;
-  grid-template-columns: repeat(3, 48px);
-  gap: 5px;
+  grid-template-columns: repeat(3, 43px);
+  gap: 4px;
 }
 #move button {
-  min-width: 0;
-  width: 48px;
-  height: 45px;
-  padding: 0;
+  width: 43px;
+  height: 40px;
+  border-radius: 11px;
+  font-size: 17px;
 }
-#move .empty {
+.empty {
   visibility: hidden;
+}
+#attack {
+  width: clamp(72px, 14vw, 100px);
+  height: clamp(72px, 14vw, 100px);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ff7160, #d92738);
+  border: 4px solid #ffc0a7;
+  font-size: clamp(12px, 2.6vw, 17px);
+  box-shadow: 0 0 25px #ff3f4d50, 0 5px 0 #721a28;
 }
 #overlay {
   position: fixed;
@@ -142,37 +117,66 @@ button:active {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #080c16df;
-  z-index: 5;
+  background: #080c16eF;
+  z-index: 10;
+  padding: 12px;
 }
 .card {
-  width: min(90%, 420px);
+  width: min(90%, 380px);
+  max-height: 90%;
+  overflow: auto;
   text-align: center;
-  padding: 30px;
-  border-radius: 24px;
+  padding: 22px;
+  border-radius: 22px;
   background: linear-gradient(145deg, #243d61, #121b2b);
   border: 2px solid #70c8ff80;
   box-shadow: 0 0 45px #188aff30;
 }
 h1 {
-  font-size: 34px;
-  margin: 0 0 12px;
+  font-size: clamp(28px, 5vw, 40px);
+  margin: 0 0 5px;
   color: #7de0ff;
   text-shadow: 0 0 20px #168dff;
 }
-#start {
-  width: 100%;
-  margin-top: 15px;
-  background: #168cff;
-  font-size: 20px;
+h2 {
+  margin: 5px 0 15px;
 }
 #hint {
-  color: #b8c9dc;
-  line-height: 1.6;
+  color: #c1d2e6;
+  line-height: 1.5;
+  font-size: 14px;
 }
-@media (min-width: 800px) {
-  #controls {
-    padding: 0 55px;
+#start {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #168cff, #4a65ff);
+  font-size: 19px;
+}
+#rotateMessage {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #10141e;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 25px;
+  font-size: 22px;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+}
+@media (orientation: portrait) {
+  #rotateMessage {
+    display: flex;
+  }
+}
+@media (orientation: landscape) {
+  #rotateMessage {
+    display: none;
   }
 }
 </style>
@@ -185,9 +189,9 @@ h1 {
     <div class="panel">ניקוד: <span id="score">0</span></div>
   </div>
   <div id="healthBox" class="panel">
-    <div>בריאות השחקן</div>
+    <div>בריאות</div>
     <div class="bar"><div id="health"></div></div>
-    <div style="margin-top:6px">ניצחונות: <span id="wins">0</span></div>
+    <div style="margin-top:5px">ניצחונות: <span id="wins">0</span></div>
   </div>
   <div id="controls">
     <div id="move">
@@ -201,6 +205,9 @@ h1 {
     <button id="attack">ATTACK</button>
   </div>
 </div>
+<div id="rotateMessage">
+  יש לסובב את האייפון לרוחב כדי לשחק
+</div>
 <div id="overlay">
   <div class="card">
     <h1>TAP RUSH</h1>
@@ -208,7 +215,7 @@ h1 {
     <p id="hint">
       היכנס לזירה, התחמק מהיריבים והשתלט על הקרב.
       <br><br>
-      זוז באמצעות החצים ותקוף באמצעות כפתור ATTACK.
+      השתמש בחצים כדי לזוז ובכפתור ATTACK כדי לתקוף.
     </p>
     <button id="start">התחל משחק</button>
   </div>
@@ -216,18 +223,24 @@ h1 {
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-let W, H;
+let W = 0, H = 0, DPR = 1;
 function resize() {
-  W = canvas.width = window.innerWidth * devicePixelRatio;
-  H = canvas.height = window.innerHeight * devicePixelRatio;
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = window.innerWidth;
   H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
 window.addEventListener("resize", resize);
+window.addEventListener("orientationchange", () => {
+  setTimeout(resize, 200);
+});
 resize();
 const player = {
-  x: 0, y: 0, r: 19,
+  x: 0, y: 0, r: 18,
   hp: 100, speed: 3.2,
   cooldown: 0, invulnerable: 0
 };
@@ -242,11 +255,20 @@ let spawnTimer = 0;
 let keys = {};
 let attackHeld = false;
 let arenaTime = 0;
+let animationId = null;
 const scoreEl = document.getElementById("score");
 const healthEl = document.getElementById("health");
 const winsEl = document.getElementById("wins");
 const overlay = document.getElementById("overlay");
+document.getElementById("start").addEventListener("click", () => {
+  // בקשת מסך מלא היא אופציונלית, ותלויה בדפדפן.
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+  resetGame();
+});
 function resetGame() {
+  resize();
   player.x = W / 2;
   player.y = H / 2;
   player.hp = 100;
@@ -258,28 +280,38 @@ function resetGame() {
   score = 0;
   spawnTimer = 0;
   arenaTime = 0;
+  keys = {};
+  attackHeld = false;
   for (let i = 0; i < 4; i++) spawnEnemy();
   scoreEl.textContent = score;
   healthEl.style.width = "100%";
+  document.querySelector("#overlay h1").textContent = "TAP RUSH";
+  document.querySelector("#overlay h2").textContent = "ARENA";
+  document.getElementById("hint").innerHTML =
+    "היכנס לזירה, התחמק מהיריבים והשתלט על הקרב." +
+    "<br><br>השתמש בחצים כדי לזוז ובכפתור ATTACK כדי לתקוף.";
+  document.getElementById("start").textContent = "התחל משחק";
   overlay.style.display = "none";
   running = true;
   lastTime = performance.now();
-  requestAnimationFrame(loop);
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(loop);
 }
-document.getElementById("start").addEventListener("click", resetGame);
 function spawnEnemy() {
   const side = Math.floor(Math.random() * 4);
   let x, y;
-  if (side === 0) { x = Math.random() * W; y = 70; }
+  if (side === 0) { x = Math.random() * W; y = 65; }
   if (side === 1) { x = W - 30; y = Math.random() * H; }
-  if (side === 2) { x = Math.random() * W; y = H - 80; }
+  if (side === 2) { x = Math.random() * W; y = H - 40; }
   if (side === 3) { x = 30; y = Math.random() * H; }
   enemies.push({
     x, y, r: 17,
     hp: 2,
-    speed: 0.75 + Math.random() * 0.45,
+    speed: 0.8 + Math.random() * 0.4,
     attackTimer: 0,
-    color: ["#ff514f", "#ff9f43", "#d65cff"][Math.floor(Math.random() * 3)]
+    color: ["#ff514f", "#ff9f43", "#d65cff"][
+      Math.floor(Math.random() * 3)
+    ]
   });
 }
 function particleBurst(x, y, color, amount = 10) {
@@ -299,7 +331,7 @@ function attack() {
   if (!running || player.cooldown > 0) return;
   player.cooldown = 17;
   let target = null;
-  let best = 180;
+  let best = 220;
   for (const e of enemies) {
     const d = Math.hypot(e.x - player.x, e.y - player.y);
     if (d < best) {
@@ -329,6 +361,9 @@ document.getElementById("attack").addEventListener("pointerdown", e => {
   attack();
 });
 document.getElementById("attack").addEventListener("pointerup", () => {
+  attackHeld = false;
+});
+document.getElementById("attack").addEventListener("pointercancel", () => {
   attackHeld = false;
 });
 document.querySelectorAll("[data-move]").forEach(button => {
@@ -361,11 +396,12 @@ window.addEventListener("keyup", e => {
 function drawArena() {
   ctx.fillStyle = "#263e35";
   ctx.fillRect(0, 0, W, H);
-  const tile = 48;
+  const tile = 42;
   for (let y = 0; y < H; y += tile) {
     for (let x = 0; x < W; x += tile) {
-      ctx.fillStyle = ((x / tile + y / tile) % 2 === 0)
-        ? "#2b493d" : "#304e41";
+      ctx.fillStyle =
+        ((x / tile + y / tile) % 2 === 0)
+          ? "#2b493d" : "#304e41";
       ctx.fillRect(x, y, tile - 1, tile - 1);
     }
   }
@@ -373,10 +409,10 @@ function drawArena() {
   ctx.lineWidth = 3;
   ctx.strokeRect(12, 12, W - 24, H - 24);
   const obstacles = [
-    [W * 0.22, H * 0.32, 70, 55],
-    [W * 0.68, H * 0.28, 65, 65],
-    [W * 0.27, H * 0.66, 60, 70],
-    [W * 0.72, H * 0.67, 75, 55]
+    [W * 0.22, H * 0.30, 65, 45],
+    [W * 0.68, H * 0.25, 58, 55],
+    [W * 0.27, H * 0.65, 55, 58],
+    [W * 0.72, H * 0.65, 68, 45]
   ];
   for (const [x, y, w, h] of obstacles) {
     ctx.fillStyle = "#182b27";
@@ -384,7 +420,7 @@ function drawArena() {
     ctx.fillStyle = "#697b55";
     ctx.fillRect(x, y, w, h);
     ctx.fillStyle = "#84986b";
-    ctx.fillRect(x + 5, y + 5, w - 10, 9);
+    ctx.fillRect(x + 5, y + 5, w - 10, 8);
     ctx.strokeStyle = "#182b27";
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, w, h);
@@ -423,10 +459,9 @@ function loop(now) {
   if (!running) return;
   const dt = Math.min((now - lastTime) / 16.67, 2);
   lastTime = now;
-  arenaTime += dt;
   update(dt);
   draw();
-  requestAnimationFrame(loop);
+  if (running) animationId = requestAnimationFrame(loop);
 }
 function update(dt) {
   if (player.cooldown > 0) player.cooldown -= dt;
@@ -469,10 +504,15 @@ function update(dt) {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.life -= dt;
-    let remove = b.life <= 0 ||
-      b.x < 0 || b.x > W || b.y < 0 || b.y > H;
+    let remove =
+      b.life <= 0 ||
+      b.x < 0 || b.x > W ||
+      b.y < 0 || b.y > H;
     for (const e of enemies) {
-      if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) < e.r + 7) {
+      if (
+        e.hp > 0 &&
+        Math.hypot(e.x - b.x, e.y - b.y) < e.r + 7
+      ) {
         e.hp -= b.damage;
         particleBurst(b.x, b.y, "#ffcf70", 6);
         remove = true;
@@ -502,11 +542,12 @@ function update(dt) {
     document.querySelector("#overlay h1").textContent = "GAME OVER";
     document.querySelector("#overlay h2").textContent = "הקרב הסתיים";
     document.getElementById("hint").innerHTML =
-      "הניקוד שלך: " + score + "<br>ניצחונות: " + wins +
+      "הניקוד שלך: " + score +
+      "<br>ניצחונות: " + wins +
       "<br><br>נסה שוב ושפר את התוצאה שלך.";
     document.getElementById("start").textContent = "שחק שוב";
   }
-  if (score >= (wins + 1) * 500) {
+  while (score >= (wins + 1) * 500) {
     wins++;
     winsEl.textContent = wins;
     player.hp = Math.min(100, player.hp + 15);
@@ -529,9 +570,15 @@ function draw() {
     ctx.fillStyle = "#351c25";
     ctx.fillRect(e.x - 18, e.y - 29, 36, 5);
     ctx.fillStyle = "#ff6262";
-    ctx.fillRect(e.x - 18, e.y - 29, 36 * Math.max(0, e.hp / 2), 5);
+    ctx.fillRect(
+      e.x - 18, e.y - 29,
+      36 * Math.max(0, e.hp / 2), 5
+    );
   }
-  if (player.invulnerable <= 0 || Math.floor(arenaTime / 4) % 2 === 0) {
+  if (
+    player.invulnerable <= 0 ||
+    Math.floor(arenaTime / 4) % 2 === 0
+  ) {
     drawCharacter(player.x, player.y, player.r, "#19a9ff", true);
   }
   for (const p of particles) {
